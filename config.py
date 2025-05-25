@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    # Telegram API Credentials
+    # Telegram API
     API_ID = int(os.environ.get("API_ID", 26785208))
     API_HASH = os.environ.get("API_HASH", "0ddf86040a271eaa552c3fe159d1e541")
     SESSION_STRING = os.environ.get("SESSION_STRING", "")
@@ -13,6 +13,6 @@ class Config:
     OWNER_ID = int(os.environ.get("OWNER_ID", 5397621246))
     
     # Settings
-    SLEEP_TIME = 0.3  # Anti-Flood Delay
-    DEFAULT_LIMIT = 2000
+    SLEEP_TIME = 1.5  # Anti-Flood Delay
     MAX_RETRIES = 3
+    DEFAULT_LIMIT = 100
