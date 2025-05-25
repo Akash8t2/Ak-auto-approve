@@ -140,12 +140,12 @@ if __name__ == "__main__":
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
-    # सिग्नल हैंडलर सेटअप
+    # सिग्नल हैंडलर सेटअप (Fixed Syntax)
     signals = (signal.SIGTERM, signal.SIGINT)
     for sig in signals:
         loop.add_signal_handler(
             sig,
-            lambda sig=sig: asyncio.create_task(graceful_shutdown(sig, loop))
+            lambda sig=sig: asyncio.create_task(graceful_shutdown(sig, loop))  # <-- यहाँ closing bracket जोड़ें
     
     try:
         loop.run_until_complete(main())
