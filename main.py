@@ -1,10 +1,20 @@
 import asyncio
 import time
+import os
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from config import API_ID, API_HASH, OWNER_ID, STRING_SESSION
 
-# Pyrogram Client initialization with string session
+# Heroku के Config Vars (Env Vars) से पढ़ें
+API_ID = int(os.getenv("API_ID", "0"))
+API_HASH = os.getenv("API_HASH", "")
+OWNER_ID = int(os.getenv("OWNER_ID", "0"))
+STRING_SESSION = os.getenv("STRING_SESSION", "")
+
+# अगर SESSION_PREFIX (session:) नहीं है, तो जोड़ दें
+if STRING_SESSION and not STRING_SESSION.startswith("session:"):
+    STRING_SESSION = f"session:{STRING_SESSION}"
+
+# Bot का Client initialize (session_string=STRING_SESSION)
 app = Client(
     name="SecureBot",
     api_id=API_ID,
@@ -12,16 +22,16 @@ app = Client(
     session_string=STRING_SESSION
 )
 
-# Custom command filter for the owner only
+# सिर्फ OWNER_ID वाले यूज़र के लिए कमांड्स
 def cmd(command):
     return filters.command(command, prefixes=["."]) & filters.user(OWNER_ID)
 
-# Start command
+# ------------------ Commands ------------------
+
 @app.on_message(cmd("start"))
 async def start_cmd(client, message):
     await message.reply("✅ बॉट चालू है!\n\nटाइप करें `.help` पूरी जानकारी के लिए।")
 
-# Help command
 @app.on_message(cmd("help"))
 async def help_cmd(client, message):
     await message.reply(
@@ -34,15 +44,13 @@ async def help_cmd(client, message):
         "`.status` - समूह में कितने pending requests हैं"
     )
 
-# Ping command
 @app.on_message(cmd("ping"))
 async def ping_cmd(client, message):
-    start = time.time()
+    start_time = time.time()
     reply = await message.reply("पिंग कर रहे हैं...")
-    end = time.time()
-    await reply.edit(f"🏓 Pong! `{round((end - start) * 1000)} ms`")
+    end_time = time.time()
+    await reply.edit(f"🏓 Pong! `{round((end_time - start_time) * 1000)} ms`")
 
-# Approve join requests
 @app.on_message(cmd("approve"))
 async def approve_requests(client: Client, message: Message):
     try:
@@ -56,16 +64,16 @@ async def approve_requests(client: Client, message: Message):
             try:
                 await client.approve_chat_join_request(message.chat.id, req.user.id)
                 count += 1
-                await asyncio.sleep(0.2)  # Faster speed
+                await asyncio.sleep(0.2)
             except Exception as e:
                 skipped += 1
+                # Heroku logs में error दिखा दें
                 print(f"Skipped user {req.user.id} due to error: {e}")
 
         await message.reply(f"✅ {count} अनुरोध स्वीकृत!\n⛔ {skipped} स्किप किए गए।")
     except Exception as e:
         await message.reply(f"⚠️ त्रुटि: {str(e)}")
 
-# Decline join requests
 @app.on_message(cmd("decline"))
 async def decline_requests(client: Client, message: Message):
     try:
@@ -88,7 +96,6 @@ async def decline_requests(client: Client, message: Message):
     except Exception as e:
         await message.reply(f"⚠️ त्रुटि: {str(e)}")
 
-# Status command
 @app.on_message(cmd("status"))
 async def status_requests(client: Client, message: Message):
     try:
@@ -99,6 +106,8 @@ async def status_requests(client: Client, message: Message):
     except Exception as e:
         await message.reply(f"⚠️ त्रुटि: {str(e)}")
 
-# Run the bot
-print("✅ बॉट शुरू हो रहा है...")
-app.run()
+# ------------------ Bot Run ------------------
+
+if __name__ == "__main__":
+    print("✅ बॉट शुरू हो रहा है...")
+    app.run()
