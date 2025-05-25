@@ -16,7 +16,6 @@ if STRING_SESSION and not STRING_SESSION.startswith("session:"):
 
 # Bot का Client initialize (session_string=STRING_SESSION)
 app = Client(
-    name="SecureBot",
     api_id=API_ID,
     api_hash=API_HASH,
     session_string=STRING_SESSION
