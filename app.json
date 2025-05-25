@@ -1,0 +1,28 @@
+{
+  "name": "SecureJoinBot",
+  "description": "A Pyrogram bot to manage Telegram group join requests",
+  "repository": "https://github.com/your-username/your-repo-name",
+  "env": {
+    "API_ID": {
+      "description": "Get this from https://my.telegram.org",
+      "required": true
+    },
+    "API_HASH": {
+      "description": "Get this from https://my.telegram.org",
+      "required": true
+    },
+    "OWNER_ID": {
+      "description": "Your Telegram User ID",
+      "required": true
+    },
+    "STRING_SESSION": {
+      "description": "Generate using Pyrogram string session generator",
+      "required": true
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ]
+}
