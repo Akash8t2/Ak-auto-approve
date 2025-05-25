@@ -1,10 +1,16 @@
 import os
+from dotenv import load_dotenv
 
-API_ID = int(os.getenv("API_ID"))
-API_HASH = os.getenv("API_HASH")
-OWNER_ID = int(os.getenv("OWNER_ID"))
-STRING_SESSION = os.getenv("STRING_SESSION")
+load_dotenv()
 
-# Optional fix in case session prefix is missing
-if not STRING_SESSION.startswith("session:"):
-    STRING_SESSION = f"session:{STRING_SESSION}"
+class Config:
+    # Telegram API
+    API_ID = int(os.environ.get("API_ID", 0))
+    API_HASH = os.environ.get("API_HASH", "")
+    SESSION_STRING = os.environ.get("SESSION_STRING", "")
+    
+    # Owner
+    OWNER_ID = int(os.environ.get("OWNER_ID", 0))
+    
+    # Other settings
+    SLEEP_TIME = 1.5  # Anti-flood
