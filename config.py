@@ -1,4 +1,10 @@
-API_ID = 26785208
-API_HASH = "0ddf86040a271eaa552c3fe159d1e541"
-OWNER_ID = 5397621246
-STRING_SESSION = ""
+import os
+
+API_ID = int(os.getenv("API_ID"))
+API_HASH = os.getenv("API_HASH")
+OWNER_ID = int(os.getenv("OWNER_ID"))
+STRING_SESSION = os.getenv("STRING_SESSION")
+
+# Optional fix in case session prefix is missing
+if not STRING_SESSION.startswith("session:"):
+    STRING_SESSION = f"session:{STRING_SESSION}"
