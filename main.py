@@ -1,69 +1,97 @@
+import os
 import asyncio
 import time
-from datetime import datetime
 from pyrogram import Client, filters
 from pyrogram.types import Message
-from config import Config
+from pyrogram.errors import FloodWait
+from dotenv import load_dotenv
 
+# Load environment variables
+load_dotenv()
+
+# Configuration
+API_ID = int(os.environ["API_ID"])
+API_HASH = os.environ["API_HASH"]
+SESSION_STRING = os.environ["SESSION_STRING"]
+OWNER_ID = int(os.environ["OWNER_ID"])
+SLEEP_TIME = 1.5  # Anti-Flood delay
+
+# Initialize Client
 app = Client(
-    name="my_session",
-    api_id=Config.API_ID,
-    api_hash=Config.API_HASH,
-    session_string=Config.SESSION_STRING
+    name="SecureBot",
+    api_id=API_ID,
+    api_hash=API_HASH,
+    session_string=SESSION_STRING
 )
 
+# Command filter
 def cmd(command):
-    return filters.command(command, prefixes=["."]) & filters.user(Config.OWNER_ID)
+    return filters.command(command, prefixes=["."]) & filters.user(OWNER_ID)
 
 # -------------------- Commands --------------------
 @app.on_message(cmd("start"))
-async def start_cmd(client, message):
-    await message.reply("✅ बॉट चालू है!\n\nटाइप करें `.help` पूरी जानकारी के लिए।")
+async def start_cmd(client: Client, message: Message):
+    await message.reply(
+        "✅ बॉट चालू है!\n\n"
+        "उपलब्ध कमांड्स:\n"
+        ".help - सभी कमांड्स दिखाएं\n"
+        ".ping - बॉट की गति जांचें"
+    )
 
 @app.on_message(cmd("help"))
-async def help_cmd(client, message):
+async def help_cmd(client: Client, message: Message):
     help_text = (
         "**बॉट कमांड्स:**\n"
-        "`.start` - बॉट को शुरू करें\n"
-        "`.help` - यह मेसेज देखें\n"
-        "`.ping` - बॉट की गति जांचें\n"
-        "`.approve <limit>` - Pending join requests को approve करें\n"
-        "`.decline <limit>` - Pending join requests को decline करें\n"
-        "`.status` - समूह में कितने pending requests हैं"
+        "`.approve [limit]` - स्वीकृत करें अनुरोध\n"
+        "`.decline [limit]` - अस्वीकृत करें अनुरोध\n"
+        "`.status` - लंबित अनुरोधों की संख्या\n"
+        "`.ping` - बॉट की गति जांचें"
     )
     await message.reply(help_text)
 
 @app.on_message(cmd("ping"))
-async def ping_cmd(client, message):
+async def ping_cmd(client: Client, message: Message):
     start = time.time()
-    reply = await message.reply("पिंग कर रहे हैं...")
-    end = time.time()
-    await reply.edit(f"🏓 Pong! `{round((end - start) * 1000)} ms`")
+    reply = await message.reply("🏓 पिंग...")
+    delta = (time.time() - start) * 1000
+    await reply.edit(f"🏓 पोंग! `{delta:.2f}ms`")
 
 # ----------- Join Request Management -----------
-async def handle_requests(client, message, action_type):
+async def handle_requests(client: Client, message: Message, action: str):
     try:
-        limit = int(message.command[1]) if len(message.command) > 1 else Config.DEFAULT_LIMIT
+        limit = int(message.command[1]) if len(message.command) > 1 else 100
         count = 0
         
-        async for req in client.get_chat_join_requests(message.chat.id):
+        async for request in client.get_chat_join_requests(message.chat.id):
             if count >= limit:
                 break
                 
-            if action_type == "approve":
-                await client.approve_chat_join_request(message.chat.id, req.user.id)
-            elif action_type == "decline":
-                await client.decline_chat_join_request(message.chat.id, req.user.id)
+            try:
+                if action == "approve":
+                    await client.approve_chat_join_request(
+                        chat_id=message.chat.id,
+                        user_id=request.user.id
+                    )
+                elif action == "decline":
+                    await client.decline_chat_join_request(
+                        chat_id=message.chat.id,
+                        user_id=request.user.id
+                    )
                 
-            count += 1
-            await asyncio.sleep(Config.SLEEP_TIME)
-            
-        action_emoji = "✅" if action_type == "approve" else "❌"
-        action_text = "स्वीकृत" if action_type == "approve" else "अस्वीकृत"
-        await message.reply(f"{action_emoji} {count} अनुरोध {action_text}!")
+                count += 1
+                await asyncio.sleep(SLEEP_TIME)
+                
+            except FloodWait as e:
+                await asyncio.sleep(e.value)
+            except Exception as e:
+                await message.reply(f"त्रुटि: {str(e)}")
+                continue
         
+        action_text = "स्वीकृत" if action == "approve" else "अस्वीकृत"
+        await message.reply(f"✅ {count} अनुरोध {action_text}!")
+
     except Exception as e:
-        await message.reply(f"⚠️ त्रुटि: {str(e)}")
+        await message.reply(f"⚠️ गंभीर त्रुटि: {str(e)}")
 
 @app.on_message(cmd("approve"))
 async def approve_requests(client: Client, message: Message):
@@ -76,13 +104,18 @@ async def decline_requests(client: Client, message: Message):
 @app.on_message(cmd("status"))
 async def status_requests(client: Client, message: Message):
     try:
-        pending = []
-        async for req in client.get_chat_join_requests(message.chat.id):
-            pending.append(req.user.id)
-        await message.reply(f"ℹ️ Pending Join Requests: `{len(pending)}`")
+        count = 0
+        async for _ in client.get_chat_join_requests(message.chat.id):
+            count += 1
+        await message.reply(f"ℹ️ लंबित अनुरोध: {count}")
     except Exception as e:
         await message.reply(f"⚠️ त्रुटि: {str(e)}")
 
+# -------------------- Main --------------------
+async def main():
+    await app.start()
+    print("✅ बॉट सफलतापूर्वक शुरू हुआ!")
+    await asyncio.Event().wait()
+
 if __name__ == "__main__":
-    print("✅ बॉट शुरू हो रहा है...")
-    app.run()
+    asyncio.run(main())
