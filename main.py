@@ -6,7 +6,7 @@ from pyrogram.types import Message
 from config import Config
 
 app = Client(
-    name="SecureBot",
+    name="my_session",
     api_id=Config.API_ID,
     api_hash=Config.API_HASH,
     session_string=Config.SESSION_STRING
