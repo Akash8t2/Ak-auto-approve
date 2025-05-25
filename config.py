@@ -13,6 +13,6 @@ class Config:
     OWNER_ID = int(os.environ.get("OWNER_ID", 5397621246))
     
     # Settings
-    SLEEP_TIME = 1.5  # Anti-Flood Delay
-    DEFAULT_LIMIT = 100
+    SLEEP_TIME = 0.3  # Anti-Flood Delay
+    DEFAULT_LIMIT = 2000
     MAX_RETRIES = 3
