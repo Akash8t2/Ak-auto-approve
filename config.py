@@ -10,7 +10,7 @@ class Config:
     SESSION_STRING = os.environ.get("SESSION_STRING", "")
     
     # Owner
-    OWNER_ID = int(os.environ.get("OWNER_ID", 0))
+    OWNER_ID = int(os.environ.get("OWNER_ID", ))
     
     # Other settings
     SLEEP_TIME = 1.5  # Anti-flood
